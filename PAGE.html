@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMO | Lamps & Objects</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Configuración personalizada de Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        matte: { dark: '#121212', light: '#F9F9F9', white: '#FFFFFF' },
+                        accent: { amber: '#FF9F1C', whatsapp: '#25D366' }
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        .logo-text { font-family: 'Arial', sans-serif; }
+        /* Animación suave para la vista previa del nuevo Modal */
+        .modal-enter { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        /* Custom scrollbar para el interior del modal si el texto es muy largo */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px;}
+        .custom-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #999; }
+    </style>
+</head>
+<body class="bg-matte-light text-gray-800 font-sans antialiased">
+
+    <!-- MODAL DE VISTA PREVIA AVANZADO (Oculto por defecto) -->
+    <div id="image-modal" class="fixed inset-0 z-[100] hidden bg-black/80 backdrop-blur-sm flex-col justify-center items-center p-4 md:p-8 transition-opacity">
+        <!-- Contenedor principal del modal -->
+        <div id="modal-content-box" class="relative max-w-5xl w-full bg-white rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden max-h-[95vh]">
+            
+            <!-- Botón Cerrar absoluto al contenedor -->
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-matte-dark bg-gray-100 hover:bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center transition-colors z-[101]">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+
+            <!-- Izquierda: Imagen -->
+            <div class="w-full md:w-1/2 bg-matte-dark flex justify-center items-center relative min-h-[300px] md:min-h-0">
+                <img id="modal-img" src="" alt="Vista previa" class="absolute w-full h-full object-cover opacity-90">
+            </div>
+
+            <!-- Derecha: Detalles y Especificaciones -->
+            <div class="w-full md:w-1/2 bg-white p-6 md:p-10 flex flex-col overflow-y-auto custom-scroll">
+                
+                <!-- Encabezado del producto -->
+                <div class="mb-4 pr-8">
+                    <span id="modal-id" class="inline-block text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded mb-2 border border-gray-200"></span>
+                    <h3 id="modal-title" class="text-3xl font-light text-gray-900 leading-tight"></h3>
+                </div>
+                
+                <p id="modal-desc" class="text-gray-600 mb-8 text-sm leading-relaxed"></p>
+
+                <!-- Cajas de Especificaciones -->
+                <div class="space-y-4 mb-8">
+                    
+                    <!-- Caja 1: Materiales y Cuidados -->
+                    <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-100">
+                        <h4 class="text-sm font-bold text-gray-900 mb-2 flex items-center">
+                            <i class="fas fa-layer-group text-accent-amber mr-2"></i> Material y Cuidados
+                        </h4>
+                        <div class="space-y-2 text-sm">
+                            <p id="modal-material" class="text-gray-700"></p>
+                            <p id="modal-care" class="text-gray-700 bg-white p-2 rounded border border-red-100"></p>
+                        </div>
+                    </div>
+
+                    <!-- Caja 2: Dimensiones y Detalles Técnicos -->
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <h4 class="text-sm font-bold text-gray-900 mb-2 flex items-center">
+                            <i class="fas fa-ruler-combined text-gray-400 mr-2"></i> Especificaciones Técnicas
+                        </h4>
+                        <div class="space-y-2 text-sm">
+                            <p id="modal-dimensions" class="text-gray-700"></p>
+                            <p id="modal-colors" class="text-gray-700"></p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Botón de Compra / Cierre de sección -->
+                <div class="mt-auto pt-4 border-t border-gray-100">
+                    <p class="text-xs text-gray-400 mb-3 text-center"><i class="fas fa-info-circle"></i> Al cotizar, puedes preguntar por tamaños personalizados.</p>
+                    <a id="modal-link" href="#" target="_blank" class="flex justify-center items-center w-full px-6 py-4 border border-transparent rounded-xl shadow-md text-base font-bold text-white bg-accent-whatsapp hover:bg-green-500 hover:scale-[1.02] transition-all duration-300">
+                        <i class="fab fa-whatsapp mr-2 text-2xl"></i> Cotizar este modelo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BARRA DE NAVEGACIÓN -->
+    <header class="bg-matte-dark text-white sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex-shrink-0 flex flex-col justify-center">
+                    <a href="#" class="logo-text text-2xl font-bold tracking-widest text-white flex items-center">
+                        LUM<span class="text-accent-amber text-3xl mx-0.5">∞</span>
+                    </a>
+                    <span class="text-[10px] uppercase tracking-widest text-gray-400 mt-[-4px]">Lamps & objects</span>
+                </div>
+                <nav class="hidden md:flex space-x-6 lg:space-x-8">
+                    <a href="#catalogo" class="text-gray-300 hover:text-accent-amber transition-colors text-sm font-medium">Catálogo</a>
+                    <a href="#personalizado" class="text-gray-300 hover:text-accent-amber transition-colors text-sm font-medium">Personalizados</a>
+                    <a href="#makerworld" class="text-gray-300 hover:text-accent-amber transition-colors text-sm font-medium">MakerWorld</a>
+                    <a href="#nosotros" class="text-gray-300 hover:text-accent-amber transition-colors text-sm font-medium">Nosotros</a>
+                </nav>
+                <div class="md:hidden flex items-center">
+                    <a href="#catalogo" class="text-accent-amber text-2xl"><i class="fas fa-bars"></i></a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="bg-matte-dark text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/50"></div>
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32 relative z-10 text-center flex flex-col items-center">
+            <i class="fas fa-lightbulb text-4xl text-accent-amber mb-6 drop-shadow-[0_0_15px_rgba(255,159,28,0.5)]"></i>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-light mb-6 leading-tight">
+                Iluminación y objetos 3D con <span class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">diseño excepcional</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl">
+                Piezas únicas impresas en 3D bajo demanda. Conectamos directamente contigo para ofrecerte la mejor atención personalizada.
+            </p>
+            <a href="#catalogo" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-matte-dark bg-matte-light hover:bg-gray-200 hover:-translate-y-1 transition-all duration-300 shadow-lg">
+                Explorar Catálogo <i class="fas fa-arrow-down ml-2"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- SECCIÓN CATÁLOGO -->
+    <section id="catalogo" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-light text-matte-dark mb-6">Catálogo Principal</h2>
+            
+            <!-- TOGGLE / SWITCH INTERACTIVO -->
+            <div class="inline-flex bg-gray-200 p-1 rounded-full overflow-hidden shadow-inner">
+                <button id="btn-todas" onclick="filterCatalog('todas')" class="px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 bg-matte-dark text-white shadow-md">
+                    Todas
+                </button>
+                <button id="btn-original" onclick="filterCatalog('original')" class="px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 text-gray-600 hover:bg-gray-300">
+                    Original ⭐
+                </button>
+                <button id="btn-creadores" onclick="filterCatalog('creadores')" class="px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 text-gray-600 hover:bg-gray-300">
+                    Creadores 🌐
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-4"><i class="fas fa-hand-pointer"></i> Haz clic en la imagen para ver detalles y materiales</p>
+        </div>
+
+        <!-- CUADRÍCULA -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" id="catalog-grid">
+            
+            <!-- TARJETA 1 (Original) - MATERIAL PLA -->
+            <div class="catalog-item bg-matte-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 group relative flex flex-col" data-category="original">
+                <div class="absolute top-4 left-4 z-10 pointer-events-none">
+                    <span class="px-2.5 py-1 bg-blue-600 text-white text-[10px] font-bold uppercase rounded tracking-wider shadow-md">Original</span>
+                </div>
+                
+                <!-- Contenedor de Imagen con Evento OnClick y Data Attributes para el Modal -->
+                <div class="relative h-64 overflow-hidden bg-gray-100 flex justify-center items-center cursor-pointer group-hover:bg-gray-200 transition-colors" 
+                     onclick="openModal(this)"
+                     data-img="https://placehold.co/800x800/222222/F9F9F9?text=Lampara+Eclipse\nMatte+Black"
+                     data-title="Lámpara Eclipse"
+                     data-id="LUM-001"
+                     data-desc="Diseño geométrico minimalista. Se adapta a cualquier buró o escritorio moderno. Su estructura proyecta una luz difusa ideal para lectura o ambientación."
+                     data-material="PLA (Ácido Poliláctico) - Bioplástico ecológico."
+                     data-care="No exponer por tiempos prolongados al sol. Temperatura máxima de uso: 50°C. Uso exclusivo en interiores."
+                     data-dimensions="20 cm alto x 15 cm ancho x 15 cm profundidad."
+                     data-colors="Negro Matte / Blanco Matte."
+                     data-link="https://wa.me/529371085174?text=Hola%2C%20quiero%20comprar%20el%20modelo%20ID%3A%20LUM-001%20%28L%C3%A1mpara%20Eclipse%29.%20%C2%BFPuedes%20cotizarme%3F">
+                    
+                    <img src="https://placehold.co/600x400/222222/F9F9F9?text=Lampara+Eclipse\nMatte+Black" alt="Lámpara Eclipse" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex flex-col justify-center items-center backdrop-blur-[1px] opacity-0 group-hover:opacity-100">
+                        <div class="bg-white/90 text-matte-dark px-4 py-2 rounded-full font-bold shadow-lg flex items-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                            <i class="fas fa-plus-circle mr-2 text-accent-amber"></i> Ver Detalles
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-xl font-bold text-gray-900">Lámpara Eclipse</h3>
+                        <span class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded">LUM-001</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4 flex-grow">Diseño geométrico minimalista para buró o escritorio.</p>
+                    <a href="https://wa.me/529371085174?text=Hola%2C%20quiero%20comprar%20el%20modelo%20ID%3A%20LUM-001%20%28L%C3%A1mpara%20Eclipse%29.%20%C2%BFPuedes%20cotizarme%3F" target="_blank" class="block w-full text-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-accent-whatsapp hover:bg-green-500 transition-all duration-200">
+                        <i class="fab fa-whatsapp mr-1"></i> Cotizar Lámpara
+                    </a>
+                </div>
+            </div>
+
+            <!-- TARJETA 2 (Creadores) - MATERIAL PETG -->
+            <div class="catalog-item bg-matte-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 group relative flex flex-col" data-category="creadores">
+                <div class="absolute top-4 left-4 z-10 pointer-events-none">
+                    <span class="px-2.5 py-1 bg-green-700 text-white text-[10px] font-bold uppercase rounded tracking-wider shadow-md">Creadores</span>
+                </div>
+                
+                <div class="relative h-64 overflow-hidden bg-gray-100 flex justify-center items-center cursor-pointer group-hover:bg-gray-200 transition-colors" 
+                     onclick="openModal(this)"
+                     data-img="https://placehold.co/800x800/E5E5E5/444444?text=Lampara+Voronoi\nMatte+White"
+                     data-title="Torre Voronoi"
+                     data-id="LUM-002"
+                     data-desc="Patrón orgánico que proyecta sombras increíbles en la pared al encenderse. Diseño abierto que permite una máxima dispersión de la luz LED interna."
+                     data-material="PETG (Tereftalato de polietileno) - Alta resistencia térmica y mecánica."
+                     data-care="Soporta hasta 70°C. Mayor durabilidad. Limpiar con paño ligeramente húmedo, no usar solventes abrasivos."
+                     data-dimensions="25 cm alto x 12 cm diámetro."
+                     data-colors="Blanco Matte / Crema."
+                     data-link="https://wa.me/529371085174?text=Hola%2C%20quiero%20comprar%20el%20modelo%20ID%3A%20LUM-002%20%28Torre%20Voronoi%29.%20%C2%BFPuedes%20cotizarme%3F">
+                    
+                    <img src="https://placehold.co/600x400/E5E5E5/444444?text=Lampara+Voronoi\nMatte+White" alt="Lámpara Voronoi" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex flex-col justify-center items-center backdrop-blur-[1px] opacity-0 group-hover:opacity-100">
+                        <div class="bg-white/90 text-matte-dark px-4 py-2 rounded-full font-bold shadow-lg flex items-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                            <i class="fas fa-plus-circle mr-2 text-accent-amber"></i> Ver Detalles
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="flex justify-between items-start mb-1">
+                        <h3 class="text-xl font-bold text-gray-900">Torre Voronoi</h3>
+                        <span class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded">LUM-002</span>
+                    </div>
+                    <p class="text-[11px] text-gray-400 mb-2 italic">Diseño por: Maker3D_Pro (Licencia CC)</p>
+                    <p class="text-sm text-gray-500 mb-4 flex-grow">Patrón orgánico que proyecta sombras increíbles en la pared al encenderse.</p>
+                    <a href="https://wa.me/529371085174?text=Hola%2C%20quiero%20comprar%20el%20modelo%20ID%3A%20LUM-002%20%28Torre%20Voronoi%29.%20%C2%BFPuedes%20cotizarme%3F" target="_blank" class="block w-full text-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-accent-whatsapp hover:bg-green-500 transition-all duration-200">
+                        <i class="fab fa-whatsapp mr-1"></i> Cotizar Lámpara
+                    </a>
+                </div>
+            </div>
+
+            <!-- TARJETA 3 (Original - Accesorio) - MATERIAL PLA -->
+            <div class="catalog-item bg-matte-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 group relative flex flex-col" data-category="original">
+                <div class="absolute top-4 left-4 z-10 pointer-events-none">
+                    <span class="px-2.5 py-1 bg-blue-600 text-white text-[10px] font-bold uppercase rounded tracking-wider shadow-md">Original</span>
+                </div>
+                
+                <div class="relative h-64 overflow-hidden bg-gray-100 flex justify-center items-center cursor-pointer group-hover:bg-gray-200 transition-colors" 
+                     onclick="openModal(this)"
+                     data-img="https://placehold.co/800x800/222222/FF9F1C?text=Maceta+Poligonal\nMatte+Black"
+                     data-title="Maceta Low-Poly"
+                     data-id="OBJ-001"
+                     data-desc="Pieza de decoración ideal para suculentas o plantas pequeñas de interior. Cuenta con drenaje interno optimizado para evitar encharcamientos."
+                     data-material="PLA (Ácido Poliláctico) - Resistente al agua de riego moderado."
+                     data-care="Uso exclusivo en interiores. No colocar al sol directo del mediodía. Temperatura máxima: 50°C."
+                     data-dimensions="10 cm alto x 10 cm ancho x 8 cm profundidad."
+                     data-colors="Personalizable (Negro, Blanco, Gris, Mármol)."
+                     data-link="https://wa.me/529371085174?text=Hola%2C%20quiero%20comprar%20el%20modelo%20ID%3A%20OBJ-001%20%28Maceta%20Low-Poly%29.%20%C2%BFPuedes%20cotizarme%3F">
+                    
+                    <img src="https://placehold.co/600x400/222222/FF9F1C?text=Maceta+Poligonal\nMatte+Black" alt="Objeto Decorativo" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex flex-col justify-center items-center backdrop-blur-[1px] opacity-0 group-hover:opacity-100">
+                        <div class="bg-white/90 text-matte-dark px-4 py-2 rounded-full font-bold shadow-lg flex items-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                            <i class="fas fa-plus-circle mr-2 text-accent-amber"></i> Ver Detalles
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-xl font-bold text-gray-900">Maceta Low-Poly</h3>
+                        <span class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded">OBJ-001</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4 flex-grow">Pieza de decoración ideal para suculentas. Resistente y con textura suave.</p>
+                    <a href="https://wa.me/529371085174?text=Hola%2C%20quiero%20comprar%20el%20modelo%20ID%3A%20OBJ-001%20%28Maceta%20Low-Poly%29.%20%C2%BFPuedes%20cotizarme%3F" target="_blank" class="block w-full text-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-accent-whatsapp hover:bg-green-500 transition-all duration-200">
+                        <i class="fab fa-whatsapp mr-1"></i> Cotizar Objeto
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SECCIÓN DISEÑO PERSONALIZADO -->
+    <section id="personalizado" class="bg-matte-dark py-20 border-y border-gray-800">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent-amber/20 mb-6">
+                <i class="fas fa-pen-nib text-2xl text-accent-amber"></i>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-light text-white mb-6">¿Tienes una idea en mente?</h2>
+            <p class="text-lg text-gray-400 mb-10 leading-relaxed max-w-2xl mx-auto">
+                Si buscas un regalo único, un diseño corporativo o una lámpara adaptada exactamente a las dimensiones de tu espacio, trabajamos contigo desde el modelado 3D hasta la impresión final.
+            </p>
+            <a href="https://wa.me/529371085174?text=Hola%2C%20quiero%20un%20dise%C3%B1o%20personalizado%20para%20LUMO.%20Tengo%20esta%20idea%20en%20mente%20y%20me%20gustar%C3%ADa%20saber%20el%20proceso%3A" target="_blank" class="inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-bold rounded-md text-matte-dark bg-accent-amber hover:bg-yellow-500 hover:scale-105 transition-all duration-300 shadow-[0_0_15px_rgba(255,159,28,0.3)]">
+                <i class="fas fa-comment-dots mr-2"></i> Iniciar Proyecto Personalizado
+            </a>
+        </div>
+    </section>
+
+    <!-- SECCIÓN MAKERWORLD -->
+    <section id="makerworld" class="py-20 bg-matte-light border-b border-gray-200">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl md:text-4xl font-light text-matte-dark mb-4">Diseños por Cotización</h2>
+            <p class="text-gray-600 mb-12 max-w-2xl mx-auto">
+                ¿Viste un modelo increíble en <span class="font-semibold text-accent-amber">MakerWorld</span> o <span class="font-semibold text-blue-600">Thingiverse</span>? Envíanos el enlace y nosotros nos encargamos de imprimirlo con la mejor calidad.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative top-0 hover:-top-2 transition-all duration-300">
+                    <div class="w-12 h-12 rounded-full bg-matte-dark text-white flex items-center justify-center text-xl font-bold mx-auto mb-4">1</div>
+                    <h3 class="font-bold text-lg mb-2">Explora</h3>
+                    <p class="text-sm text-gray-500">Busca el modelo 3D que más te guste en repositorios online.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative top-0 hover:-top-2 transition-all duration-300">
+                    <div class="w-12 h-12 rounded-full bg-matte-dark text-white flex items-center justify-center text-xl font-bold mx-auto mb-4">2</div>
+                    <h3 class="font-bold text-lg mb-2">Copia el Link</h3>
+                    <p class="text-sm text-gray-500">Asegúrate de copiar la URL o enlace directo del diseño elegido.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative top-0 hover:-top-2 transition-all duration-300">
+                    <div class="w-12 h-12 rounded-full bg-accent-amber text-matte-dark flex items-center justify-center text-xl font-bold mx-auto mb-4 shadow-lg shadow-accent-amber/30">3</div>
+                    <h3 class="font-bold text-lg mb-2">Cotiza al Instante</h3>
+                    <p class="text-sm text-gray-500">Mándanos el link por WhatsApp y te daremos costo y tiempos.</p>
+                </div>
+            </div>
+
+            <a href="https://wa.me/529371085174?text=Hola%2C%20me%20gustar%C3%ADa%20cotizar%20la%20impresi%C3%B3n%20de%20un%20modelo.%20Aqu%C3%AD%20est%C3%A1%20el%20enlace%20de%20MakerWorld%3A" target="_blank" class="inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-bold rounded-md text-white bg-accent-whatsapp hover:bg-green-500 hover:scale-105 transition-all duration-300 shadow-md">
+                <i class="fab fa-whatsapp mr-2 text-xl"></i> Enviar enlace por WhatsApp
+            </a>
+        </div>
+    </section>
+
+    <!-- SECCIÓN SOBRE NOSOTROS (Aviso Legal y Materiales) -->
+    <section id="nosotros" class="py-20 bg-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center gap-12">
+                <div class="w-full md:w-1/2">
+                    <div class="bg-gray-100 rounded-2xl h-80 flex items-center justify-center overflow-hidden">
+                        <img src="https://placehold.co/800x600/121212/FF9F1C?text=Impresion+3D\nFDM" alt="Impresión 3D" class="w-full h-full object-cover opacity-90 hover:scale-105 transition-transform duration-700">
+                    </div>
+                </div>
+                <div class="w-full md:w-1/2">
+                    <h2 class="text-3xl font-light text-matte-dark mb-6">Nuestra Tecnología y Materiales</h2>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        En LUMO fusionamos el diseño industrial con la <strong>tecnología de impresión 3D FDM</strong>. Esto nos permite crear geometrías complejas, texturas únicas en cada capa y reducir el desperdicio de fabricación tradicional.
+                    </p>
+                    
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded-r-lg">
+                        <h4 class="font-bold text-blue-800 mb-1 flex items-center"><i class="fas fa-cube mr-2"></i> Materiales: PLA y PETG</h4>
+                        <p class="text-sm text-blue-700">
+                            Utilizamos <strong>PLA (Ácido Poliláctico)</strong>, un bioplástico ecológico derivado del maíz ideal para acabados estéticos, y <strong>PETG</strong> para piezas que requieren mayor resistencia mecánica y térmica.
+                        </p>
+                    </div>
+
+                    <h4 class="font-bold text-gray-800 mb-3 mt-6"><i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Cuidados Importantes (Aviso Legal):</h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Cuidados PLA -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <h5 class="font-bold text-gray-900 mb-2 border-b border-gray-200 pb-2"><i class="fas fa-leaf text-green-600 mr-2"></i>Cuidados para PLA</h5>
+                            <ul class="text-sm text-gray-600 space-y-2 mt-2">
+                                <li><i class="fas fa-temperature-high text-red-400 mr-2 w-4"></i><strong>Calor:</strong> Temperatura máxima 50°C. No exponer al sol directo ni dejar en autos.</li>
+                                <li><i class="fas fa-home text-blue-400 mr-2 w-4"></i><strong>Uso:</strong> Exclusivo para interiores.</li>
+                                <li><i class="fas fa-broom text-gray-400 mr-2 w-4"></i><strong>Limpieza:</strong> Paño ligeramente húmedo. Sin solventes.</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Cuidados PETG -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <h5 class="font-bold text-gray-900 mb-2 border-b border-gray-200 pb-2"><i class="fas fa-shield-alt text-blue-600 mr-2"></i>Cuidados para PETG</h5>
+                            <ul class="text-sm text-gray-600 space-y-2 mt-2">
+                                <li><i class="fas fa-thermometer-three-quarters text-orange-400 mr-2 w-4"></i><strong>Calor:</strong> Soporta hasta 70°C. Mayor resistencia térmica.</li>
+                                <li><i class="fas fa-cloud-sun text-blue-400 mr-2 w-4"></i><strong>Uso:</strong> Apto para interiores y espacios semi-abiertos.</li>
+                                <li><i class="fas fa-broom text-gray-400 mr-2 w-4"></i><strong>Limpieza:</strong> Muy resistente. Paño húmedo o alcohol isopropílico.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-matte-dark text-gray-400 py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-center md:text-left">
+                <div class="logo-text text-xl font-bold tracking-widest text-white mb-2">
+                    LUM<span class="text-accent-amber text-2xl mx-0.5">∞</span>
+                </div>
+                <p class="text-xs uppercase tracking-wider">Lamps & Objects • México</p>
+            </div>
+            
+            <div class="text-sm text-center">
+                <p>&copy; 2026 LUMO. Todos los derechos reservados.</p>
+                <p class="mt-1 text-xs text-gray-500">Entregas locales y envíos a convenir mediante WhatsApp.</p>
+            </div>
+
+            <div class="flex space-x-6 items-center">
+                <a href="https://instagram.com/try.lumo" target="_blank" class="text-gray-400 hover:text-white transition-colors flex items-center group">
+                    <i class="fab fa-instagram text-2xl mr-2 group-hover:text-pink-500 transition-colors"></i> 
+                    <span class="font-medium tracking-wide">@try.lumo</span>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPTS JS -->
+    <script>
+        // LÓGICA PARA EL SWITCH DEL CATÁLOGO
+        function filterCatalog(category) {
+            const items = document.querySelectorAll('.catalog-item');
+            const allBtns = [document.getElementById('btn-todas'), document.getElementById('btn-original'), document.getElementById('btn-creadores')];
+            
+            // Resetear estilos
+            allBtns.forEach(btn => {
+                btn.classList.remove('bg-matte-dark', 'text-white', 'shadow-md');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-300');
+            });
+
+            // Activar botón
+            const activeBtn = document.getElementById('btn-' + category);
+            activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-300');
+            activeBtn.classList.add('bg-matte-dark', 'text-white', 'shadow-md');
+
+            // Filtrar y animar
+            items.forEach(item => {
+                if (category === 'todas' || item.getAttribute('data-category') === category) {
+                    item.style.display = 'flex';
+                    item.animate([
+                        { opacity: 0, transform: 'scale(0.95)' },
+                        { opacity: 1, transform: 'scale(1)' }
+                    ], { duration: 400, easing: 'ease-out', fill: 'forwards' });
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // LÓGICA PARA EL NUEVO MODAL DE VISTA PREVIA (Alimentado por Data-Attributes)
+        function openModal(element) {
+            const modal = document.getElementById('image-modal');
+            const contentBox = document.getElementById('modal-content-box');
+            
+            // Extraer información de los atributos data-* del div clickeado
+            const data = element.dataset;
+
+            // Llenar la imagen
+            document.getElementById('modal-img').src = data.img;
+            
+            // Llenar textos principales
+            document.getElementById('modal-title').textContent = data.title;
+            document.getElementById('modal-id').textContent = data.id;
+            document.getElementById('modal-desc').textContent = data.desc;
+            
+            // Llenar especificaciones
+            document.getElementById('modal-material').innerHTML = `<span class="font-semibold text-gray-900">Material principal:</span> ${data.material}`;
+            document.getElementById('modal-care').innerHTML = `<span class="font-semibold text-red-600"><i class="fas fa-exclamation-circle"></i> Recomendación:</span> ${data.care}`;
+            
+            document.getElementById('modal-dimensions').innerHTML = `<span class="font-semibold text-gray-900">Dimensiones aprox:</span> ${data.dimensions}`;
+            document.getElementById('modal-colors').innerHTML = `<span class="font-semibold text-gray-900">Colores disponibles:</span> ${data.colors}`;
+            
+            // Actualizar enlace del botón de WhatsApp
+            document.getElementById('modal-link').href = data.link;
+            
+            // Mostrar modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Aplicar animación al cuadro interior
+            contentBox.classList.add('modal-enter');
+            
+            // Bloquear scroll de la página de fondo
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('image-modal');
+            const contentBox = document.getElementById('modal-content-box');
+            
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            contentBox.classList.remove('modal-enter');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        // Cerrar modal al hacer click fuera del cuadro blanco
+        document.getElementById('image-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        // Cerrar modal con la tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !document.getElementById('image-modal').classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
